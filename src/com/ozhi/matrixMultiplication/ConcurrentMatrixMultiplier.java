@@ -8,7 +8,7 @@ public class ConcurrentMatrixMultiplier {
 
 	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads) {
 		if (maxThreads < 1 || maxThreads > 32) {
-			throw new RuntimeException("invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
+			throw new RuntimeException("Invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
 		}
 
 		this.m1 = m1;
