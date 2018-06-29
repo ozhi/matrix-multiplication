@@ -1,24 +1,30 @@
 package com.ozhi.matrixMultiplication;
 
 import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
+
 import org.apache.commons.cli.ParseException;
 
 public class Main {
 
-	public static void main(String[] args) throws ParseException, FileNotFoundException {
+	public static void main(String[] args) throws ParseException, FileNotFoundException, UnsupportedEncodingException {
 		Config config = new Config(args);
 
-//		System.out.println("Matrix1:\n" + config.matrix1 + "\n");
-//		System.out.println("Matrix1:\n" + config.matrix2 + "\n");
+		long timeBeforeMultiplication = Calendar.getInstance().getTimeInMillis();
+
+		Matrix concurrentProduct = Matrix.concurrentProduct(config.matrix1, config.matrix2, config.tasks, config.quiet);
+
+		long timeAfterMultiplication = Calendar.getInstance().getTimeInMillis();
+		long timeTakenForMultiplication = timeAfterMultiplication - timeBeforeMultiplication;
+		System.out.println(String.format("Total time of multiplication: %s", timeTakenForMultiplication));
 		
-		System.out.println("Non-concurrent product:\n");
-		Matrix nonConcurrentProduct = config.matrix1.times(config.matrix2);
-//		System.out.println(nonConcurrentProduct);
-		
-		System.out.println("Concurrent product:\n");
-		Matrix concurrentProduct = Matrix.concurrentProduct(config.matrix1, config.matrix2, config.tasks);
-//		System.out.println(concurrentProduct);
-		
-		System.out.println("Equal results: " + nonConcurrentProduct.isSameAs(concurrentProduct));
+		if (config.outputFile != null) {
+			if (!config.quiet) {
+				System.out.println("Writing result to output file " + config.outputFile);
+			}
+			
+			config.writeMatrixToOutputFile(concurrentProduct);
+		}
 	}
 }

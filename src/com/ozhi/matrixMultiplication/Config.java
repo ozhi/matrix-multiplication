@@ -2,6 +2,8 @@ package com.ozhi.matrixMultiplication;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
 import org.apache.commons.cli.CommandLine;
@@ -33,6 +35,12 @@ class Config {
 		}
 	}
 
+	public void writeMatrixToOutputFile(Matrix matrix) throws FileNotFoundException, UnsupportedEncodingException {
+		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
+		writer.println(matrix);
+		writer.close();
+	}
+	
 	private static Options createCommandLineOptions() {
 		Options options = new Options();
 		
@@ -77,19 +85,24 @@ class Config {
 	}
 
 	private void loadOptionValues(CommandLine cmd) {
-		inputFile = cmd.getOptionValue("i");
-
-		m = Integer.parseInt(cmd.getOptionValue("m"));
-		n = Integer.parseInt(cmd.getOptionValue("n"));
-		k = Integer.parseInt(cmd.getOptionValue("k"));
-		
-		if (m <= 0 || n <= 0 || k <= 0) {
-			throw new RuntimeException("Command args m, n and k should be positive");
+		if (cmd.hasOption("i")) {
+			inputFile = cmd.getOptionValue("i");
+		} else {
+			m = Integer.parseInt(cmd.getOptionValue("m"));
+			n = Integer.parseInt(cmd.getOptionValue("n"));
+			k = Integer.parseInt(cmd.getOptionValue("k"));
+			
+			
+			if (m <= 0 || n <= 0 || k <= 0) {
+				throw new RuntimeException("Command args m, n and k should be positive");
+			}
 		}
 
-		outputFile = cmd.getOptionValue("o");
-
-		tasks = Integer.parseInt(cmd.getOptionValue("t"));
+		if (cmd.hasOption("o")) {
+			outputFile = cmd.getOptionValue("o");
+		}
+		
+		tasks = cmd.hasOption("t") ? Integer.parseInt(cmd.getOptionValue("t")) : 1;
 
 		if (tasks < 1 || tasks > 32) {
 			throw new RuntimeException("Command arg t should be in range [1, 32]");
@@ -99,6 +112,10 @@ class Config {
 	}
 
 	private void readMatricesFromInputFile() throws FileNotFoundException {
+		if (!quiet) {
+			System.out.println("Reading matrices from input file " + inputFile);
+		}
+		
 		Scanner scanner = new Scanner(new File(inputFile));
 
 		int m = scanner.nextInt();
@@ -112,7 +129,7 @@ class Config {
 			}
 		}
 
-		Matrix matrix2 = new Matrix(n, k);
+		matrix2 = new Matrix(n, k);
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < k; j++) {
 				matrix2.setCell(i, j, scanner.nextDouble());
@@ -123,6 +140,10 @@ class Config {
 	}
 	
 	private void createMatricesFromDimensions() {
+		if (!quiet) {
+			System.out.println("Generating random matrices with given dimensions");
+		}
+		
 		matrix1 = new Matrix(m, n);
 		matrix2 = new Matrix(n, k);
 

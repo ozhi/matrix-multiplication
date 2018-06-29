@@ -29,6 +29,10 @@ public class Matrix {
 	}
 	
 	public Matrix times(Matrix other) {
+		if (true) {
+			throw new Error("Only use the concurrent multiplication method");
+		}
+		
 		if (cols != other.rows) {
 			throw new IllegalArgumentException("Can not multiply matrices of incompatible sizes");
 		}
@@ -50,8 +54,8 @@ public class Matrix {
 		return result;
 	}
 	
-	public static Matrix concurrentProduct(Matrix m1, Matrix m2, int threads) {
-		ConcurrentMatrixMultiplier cmm = new ConcurrentMatrixMultiplier(m1, m2, threads);
+	public static Matrix concurrentProduct(Matrix m1, Matrix m2, int threads, boolean quiet) {
+		ConcurrentMatrixMultiplier cmm = new ConcurrentMatrixMultiplier(m1, m2, threads, quiet);
 		cmm.multiply();
 		return cmm.getResult();
 	}

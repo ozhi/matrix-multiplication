@@ -1,6 +1,7 @@
-bin
+*.class
 
-build-run
+compile
+run
 sources.txt
 
 matrix-multiplication.out

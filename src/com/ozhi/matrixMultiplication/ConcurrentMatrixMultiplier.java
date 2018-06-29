@@ -1,12 +1,16 @@
 package com.ozhi.matrixMultiplication;
 
+import java.util.Calendar;
+import java.util.Stack;
+
 public class ConcurrentMatrixMultiplier {
 	private Matrix m1;
 	private Matrix m2;
 	private int maxThreads;
+	private boolean quiet;
 	private Matrix result;
 
-	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads) {
+	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads, boolean quiet) {
 		if (maxThreads < 1 || maxThreads > 32) {
 			throw new RuntimeException("Invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
 		}
@@ -14,10 +18,13 @@ public class ConcurrentMatrixMultiplier {
 		this.m1 = m1;
 		this.m2 = m2;
 		this.maxThreads = maxThreads;
+		this.quiet = quiet;
 		this.result = null;
 	}
-	
-	public Matrix getResult() { return result; }
+
+	public Matrix getResult() {
+		return result;
+	}
 
 	public void multiply() {
 		/**
@@ -30,7 +37,9 @@ public class ConcurrentMatrixMultiplier {
 		this.result = new Matrix(m1.getRows(), m2.getCols());
 		
 		int cells = result.getRows() * result.getCols();
-		int threads = calculateActualThreads(cells, maxThreads - 1);
+		int threads = calculateActualThreads(cells, maxThreads);
+		
+		Stack<Thread> threadsToJoin = new Stack<Thread>(); 
 		
 		int intervalLength = cells / threads;
 		for (int t = 0; t < threads; t++) {
@@ -40,11 +49,14 @@ public class ConcurrentMatrixMultiplier {
 				toCellNumber = cells;
 			}
 			
-			Thread cellsCalculator = new Thread(new CellsCalculator(fromCellNumber, toCellNumber));
+			Thread cellsCalculator = new Thread(new CellsCalculator(t, fromCellNumber, toCellNumber));
 			cellsCalculator.start();
-
+			threadsToJoin.push(cellsCalculator);
+		}
+		
+		while (!threadsToJoin.isEmpty()) {
 			try {
-				cellsCalculator.join();
+				threadsToJoin.pop().join();
 			} catch (InterruptedException e) {
 				System.out.println("ConcurrentMatrixMultiplier main thread interrupted");
 			}
@@ -52,20 +64,27 @@ public class ConcurrentMatrixMultiplier {
 	}
 
 	private class CellsCalculator implements Runnable {
+		private int threadIndex;
 		private int fromCellNumber;
-		private int toCellNumber;		
+		private int toCellNumber;
 
-		public CellsCalculator(int fromCellNumber, int toCellNumber) {
-			this.fromCellNumber = fromCellNumber;	
+		public CellsCalculator(int threadIndex, int fromCellNumber, int toCellNumber) {
+			this.threadIndex = threadIndex;
+			this.fromCellNumber = fromCellNumber;
 			this.toCellNumber = toCellNumber;
 		}
 
 		// calculate cells with numbers [fromCellNumber; toCellNumber)
 		public void run() {
+			long timeBeforeCalculation = Calendar.getInstance().getTimeInMillis();
+			if (!quiet) {
+				System.out.println(String.format("Thread-%d started", threadIndex));
+			}
+			
 			for (int cellNumber = fromCellNumber; cellNumber < toCellNumber; cellNumber++) {
 				int row = cellNumber / result.getCols();
 				int col = cellNumber % result.getCols();
-				
+
 				double cellValue = 0;
 
 				int limit = m1.getCols();
@@ -75,20 +94,27 @@ public class ConcurrentMatrixMultiplier {
 
 				result.setCell(row, col, cellValue);
 			}
+
+			long timeAfterCalculation = Calendar.getInstance().getTimeInMillis();
+			long executionTime = timeAfterCalculation - timeBeforeCalculation;
+			if (!quiet) {
+				System.out.println(String.format("Thread-%d finished (execution time %d)", threadIndex, executionTime));
+			}
 		}
 	}
-	
+
 	int calculateActualThreads(int cells, int maxThreads) {
-		int threads = maxThreads;
-		
-		if (threads > cells / 100) {
-			threads = cells / 100;
-		}
-		
-		if (threads == 0) {
-			threads = 1;
-		}
-		
-		return threads;
+		return maxThreads;
+		// int threads = maxThreads;
+		//
+		// if (threads > cells / 100) {
+		// threads = cells / 100;
+		// }
+		//
+		// if (threads == 0) {
+		// threads = 1;
+		// }
+		//
+		// return threads;
 	}
 }
