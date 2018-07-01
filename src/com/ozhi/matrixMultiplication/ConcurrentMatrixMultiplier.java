@@ -16,6 +16,10 @@ public class ConcurrentMatrixMultiplier {
 	private Matrix result;
 
 	public ConcurrentMatrixMultiplier(Matrix matrix1, Matrix matrix2, int maxThreads, Logger logger) {
+		if (matrix1.getCols() != matrix2.getRows()) {
+			throw new RuntimeException("Can not multiply matrices of incompatible sizes");
+		}
+		
 		if (maxThreads < 1 || maxThreads > 32) {
 			throw new RuntimeException("Invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
 		}
