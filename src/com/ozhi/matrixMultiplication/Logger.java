@@ -18,7 +18,7 @@ public class Logger {
 		}
 	}
 	
-	public void importantLog(String format, Object...args) {
+	public void logImportant(String format, Object...args) {
 		System.out.println(String.format(format, args));
 	}
 }
