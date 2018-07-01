@@ -7,10 +7,11 @@ public class ConcurrentMatrixMultiplier {
 	private Matrix m1;
 	private Matrix m2;
 	private int maxThreads;
-	private boolean quiet;
+	private Logger logger;
+	
 	private Matrix result;
 
-	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads, boolean quiet) {
+	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads, Logger logger) {
 		if (maxThreads < 1 || maxThreads > 32) {
 			throw new RuntimeException("Invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
 		}
@@ -18,7 +19,7 @@ public class ConcurrentMatrixMultiplier {
 		this.m1 = m1;
 		this.m2 = m2;
 		this.maxThreads = maxThreads;
-		this.quiet = quiet;
+		this.logger = logger;
 		this.result = null;
 	}
 
@@ -39,9 +40,7 @@ public class ConcurrentMatrixMultiplier {
 		int cells = result.getRows() * result.getCols();
 		int threads = calculateActualThreads(cells, maxThreads);
 		
-		if (!quiet) {
-			System.out.println(String.format("Using %d threads for multiplication", threads));
-		}
+		logger.log(String.format("Using %d threads for multiplication", threads));
 		
 		Stack<Thread> threadsToJoin = new Stack<Thread>(); 
 		
@@ -81,9 +80,7 @@ public class ConcurrentMatrixMultiplier {
 		// calculate cells with numbers [fromCellNumber; toCellNumber)
 		public void run() {
 			long timeBeforeCalculation = Calendar.getInstance().getTimeInMillis();
-			if (!quiet) {
-				System.out.println(String.format("Thread-%d started", threadIndex));
-			}
+			logger.log(String.format("Thread %d started", threadIndex));
 			
 			for (int cellNumber = fromCellNumber; cellNumber < toCellNumber; cellNumber++) {
 				int row = cellNumber / result.getCols();
@@ -100,10 +97,7 @@ public class ConcurrentMatrixMultiplier {
 			}
 
 			long timeAfterCalculation = Calendar.getInstance().getTimeInMillis();
-			long executionTime = timeAfterCalculation - timeBeforeCalculation;
-			if (!quiet) {
-				System.out.println(String.format("Thread-%d finished (execution time %d)", threadIndex, executionTime));
-			}
+			logger.log(String.format("Thread %d finished (execution time %d)", threadIndex, timeAfterCalculation - timeBeforeCalculation));
 		}
 	}
 

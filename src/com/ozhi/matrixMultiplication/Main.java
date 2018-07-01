@@ -10,11 +10,12 @@ public class Main {
 
 	public static void main(String[] args) throws ParseException, FileNotFoundException, UnsupportedEncodingException {
 		Config config = new Config(args);
+		Logger logger = new Logger(config.isQuietMode());
 
 		long timeBeforeMultiplication = Calendar.getInstance().getTimeInMillis();
 
 		Matrix product = Matrix.concurrentProduct(
-				config.getMatrix1(), config.getMatrix2(), config.getMaxThreads(), config.isQuietMode());
+				config.getMatrix1(), config.getMatrix2(), config.getMaxThreads(), logger);
 
 		long timeAfterMultiplication = Calendar.getInstance().getTimeInMillis();
 		
@@ -22,7 +23,7 @@ public class Main {
 			throw new Error("Concurrent and sequential product are not equal");
 		}
 		
-		System.out.println(String.format("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication));
+		logger.importantLog(String.format("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication));
 		
 		config.processOutputMatrix(product);
 	}
