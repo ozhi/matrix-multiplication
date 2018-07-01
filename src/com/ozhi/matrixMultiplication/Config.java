@@ -1,11 +1,5 @@
 package com.ozhi.matrixMultiplication;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.Scanner;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -19,44 +13,41 @@ class Config {
 	private String outputFile;
 	private int maxThreads;
 	private boolean quiet;
-
-	private Matrix matrix1;
-	private Matrix matrix2;
 	
 	private final static int DEFAULT_MAX_THREADS = 1;
 
-	public Config(String[] commandLineArgs) throws ParseException, FileNotFoundException{
+	public Config(String[] commandLineArgs) throws ParseException {
 		CommandLine cmd = parseCommandLineArgs(commandLineArgs);
-
 		loadOptionValues(cmd);
-
-		if (cmd.hasOption("i")) {
-			readMatricesFromInputFile();
-		} else {
-			createMatricesFromDimensions();
-		}
 	}
 
-	public Matrix getMatrix1() { return matrix1; }
-	
-	public Matrix getMatrix2() { return matrix2; }
-	
-	public int getMaxThreads() { return maxThreads; }
-	
-	public boolean isQuietMode() { return quiet; }
-	
-	public void processOutputMatrix(Matrix matrix, Logger logger) throws FileNotFoundException, UnsupportedEncodingException {
-		if (outputFile == null) {
-			return;
-		}
-		
-		logger.log("Writing result to output file %s", outputFile);
-		
-		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
-		writer.println(matrix);
-		writer.close();
+	public String getInputFile() {
+		return inputFile;
 	}
 	
+	public Integer getMatrix1Rows() {
+		return matrix1Rows;
+	}
+	
+	public Integer getMatricesCommonDimension() {
+		return matricesCommonDimension;
+	}
+
+	public Integer getMatrix2Cols() {
+		return matrix2Cols;
+	}
+
+	public int getMaxThreads() {
+		return maxThreads;
+	}
+	
+	public String getOutputFile() {
+		return outputFile;
+	}
+	
+	public boolean isQuietMode() {
+		return quiet;
+	}	
 	
 	private static Options createCommandLineOptions() {
 		Options options = new Options();
@@ -123,47 +114,5 @@ class Config {
 		}
 		
 		quiet = cmd.hasOption("q");
-	}
-	
-
-	private void readMatricesFromInputFile() throws FileNotFoundException {
-		if (!quiet) {
-			System.out.println("Reading matrices from input file " + inputFile);
-		}
-		
-		Scanner scanner = new Scanner(new File(inputFile));
-
-		int m = scanner.nextInt();
-		int n = scanner.nextInt();
-		int k = scanner.nextInt();
-
-		matrix1 = readMatrixFromScanner(m, n, scanner);
-		matrix2 = readMatrixFromScanner(n, k, scanner);
-				
-		scanner.close();
-	}
-	
-	private Matrix readMatrixFromScanner(int rows, int cols, Scanner scanner) {
-		Matrix matrix = new Matrix(rows, cols);
-		
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				matrix.setCell(i, j, scanner.nextDouble());
-			}
-		}
-
-		return matrix;
-	}
-	
-	private void createMatricesFromDimensions() {
-		if (!quiet) {
-			System.out.println("Generating random matrices with given dimensions");
-		}
-		
-		matrix1 = new Matrix(matrix1Rows, matricesCommonDimension);
-		matrix2 = new Matrix(matricesCommonDimension, matrix2Cols);
-
-		matrix1.fillRandomly();
-		matrix2.fillRandomly();
 	}
 }
