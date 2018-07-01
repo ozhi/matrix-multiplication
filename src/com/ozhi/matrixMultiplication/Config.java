@@ -45,14 +45,12 @@ class Config {
 	
 	public boolean isQuietMode() { return quiet; }
 	
-	public void processOutputMatrix(Matrix matrix) throws FileNotFoundException, UnsupportedEncodingException {
+	public void processOutputMatrix(Matrix matrix, Logger logger) throws FileNotFoundException, UnsupportedEncodingException {
 		if (outputFile == null) {
 			return;
 		}
 		
-		if (!quiet) {
-			System.out.println("Writing result to output file " + outputFile);
-		}
+		logger.log("Writing result to output file %s", outputFile);
 		
 		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
 		writer.println(matrix);

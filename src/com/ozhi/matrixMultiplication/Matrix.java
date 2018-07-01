@@ -50,8 +50,8 @@ public class Matrix {
 		return result;
 	}
 	
-	public static Matrix concurrentProduct(Matrix matrix1, Matrix matrix2, int maxThreads, boolean quiet) {
-		ConcurrentMatrixMultiplier multiplier = new ConcurrentMatrixMultiplier(matrix1, matrix2, maxThreads, quiet);
+	public static Matrix concurrentProduct(Matrix matrix1, Matrix matrix2, int maxThreads, Logger logger) {
+		ConcurrentMatrixMultiplier multiplier = new ConcurrentMatrixMultiplier(matrix1, matrix2, maxThreads, logger);
 		multiplier.multiply();
 		return multiplier.getResult();
 	}
@@ -112,7 +112,7 @@ public class Matrix {
 		return true;
 	}
 	
-	// Note: If you override equals, you must also override hashCode, so we use a dummy implementation
+	// Note: If you override equals, you must also override hashCode, so we use a dummy (but valid!) implementation
 	@Override
 	public int hashCode() { return 0; }
 	
