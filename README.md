@@ -2,6 +2,10 @@
 
 __Note__: dependency on Apache commons cli 1.4
 
+This program aims to demonstrate the power of __parallel computing__. The task at hand is matrix multiplication. Through command line arguments you can provide two matrices and the max number of threads to be used and see metrics of how fast the computation was.
+
+For more details on the task, solution and test data, [__see the documentation__](./bozhin-katsarski-81291-spo-documentation.pdf) (bulgarian).
+
 ### Usage
 ```sh
 echo "Compiling..."
