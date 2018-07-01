@@ -14,17 +14,19 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 class Config {
-	public String inputFile;
-	public int m, n, k;
-	public String outputFile;
-	public int tasks;
-	public boolean quiet;
+	private String inputFile;
+	private Integer matrix1Rows, matricesCommonDimension, matrix2Cols;
+	private String outputFile;
+	private int maxThreads;
+	private boolean quiet;
 
-	public Matrix matrix1;
-	public Matrix matrix2;
+	private Matrix matrix1;
+	private Matrix matrix2;
+	
+	private final static int DEFAULT_MAX_THREADS = 1;
 
 	public Config(String[] commandLineArgs) throws ParseException, FileNotFoundException{
-		CommandLine cmd = createCommandLine(commandLineArgs);
+		CommandLine cmd = parseCommandLineArgs(commandLineArgs);
 
 		loadOptionValues(cmd);
 
@@ -35,17 +37,33 @@ class Config {
 		}
 	}
 
-	public void writeMatrixToOutputFile(Matrix matrix) throws FileNotFoundException, UnsupportedEncodingException {
+	public Matrix getMatrix1() { return matrix1; }
+	
+	public Matrix getMatrix2() { return matrix2; }
+	
+	public int getMaxThreads() { return maxThreads; }
+	
+	public boolean isQuietMode() { return quiet; }
+	
+	public void processOutputMatrix(Matrix matrix) throws FileNotFoundException, UnsupportedEncodingException {
+		if (outputFile == null) {
+			return;
+		}
+		
+		if (!quiet) {
+			System.out.println("Writing result to output file " + outputFile);
+		}
+		
 		PrintWriter writer = new PrintWriter(outputFile, "UTF-8");
 		writer.println(matrix);
 		writer.close();
 	}
 	
+	
 	private static Options createCommandLineOptions() {
 		Options options = new Options();
 		
-		// input file name
-		options.addOption(Option.builder().argName("i").longOpt("i").hasArg().desc("input file").build());
+		options.addOption(Option.builder().argName("i").longOpt("i").hasArg().desc("input file name").build());
 
 		options.addOption(Option.builder().argName("m").longOpt("m").type(Integer.class).hasArg().desc("first matrix rows").build());
 
@@ -53,19 +71,17 @@ class Config {
 
 		options.addOption(Option.builder().argName("k").longOpt("k").type(Integer.class).hasArg().desc("second matrix cols").build());
 
-		// output file name
-		options.addOption(Option.builder().argName("o").longOpt("o").hasArg().desc("output file").build());
+		options.addOption(Option.builder().argName("o").longOpt("o").hasArg().desc("output file name").build());
 
-		// number of tasks to divide the task between
 		options.addOption(Option.builder().argName("t").longOpt("t").type(Integer.class).hasArg().desc("maximum number of threads to use").build());
 
-		// quiet - only output most important messages
-		options.addOption(Option.builder().argName("q").longOpt("q").hasArg(false).desc("do not produce unnecessary output").build());
+		options.addOption(Option.builder().argName("q").longOpt("q").hasArg(false).desc("only output time of multiplication").build());
 
 		return options;
 	}
+	
 
-	private static CommandLine createCommandLine(String[] args) throws ParseException {
+	private static CommandLine parseCommandLineArgs(String[] args) throws ParseException {
 		Options options = createCommandLineOptions();
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = parser.parse(options, args);
@@ -83,17 +99,17 @@ class Config {
 
 		return cmd;
 	}
+	
 
 	private void loadOptionValues(CommandLine cmd) {
 		if (cmd.hasOption("i")) {
 			inputFile = cmd.getOptionValue("i");
 		} else {
-			m = Integer.parseInt(cmd.getOptionValue("m"));
-			n = Integer.parseInt(cmd.getOptionValue("n"));
-			k = Integer.parseInt(cmd.getOptionValue("k"));
+			matrix1Rows = Integer.parseInt(cmd.getOptionValue("m"));
+			matricesCommonDimension = Integer.parseInt(cmd.getOptionValue("n"));
+			matrix2Cols = Integer.parseInt(cmd.getOptionValue("k"));
 			
-			
-			if (m <= 0 || n <= 0 || k <= 0) {
+			if (matrix1Rows <= 0 || matricesCommonDimension <= 0 || matrix2Cols <= 0) {
 				throw new RuntimeException("Command args m, n and k should be positive");
 			}
 		}
@@ -102,14 +118,15 @@ class Config {
 			outputFile = cmd.getOptionValue("o");
 		}
 		
-		tasks = cmd.hasOption("t") ? Integer.parseInt(cmd.getOptionValue("t")) : 1;
+		maxThreads = cmd.hasOption("t") ? Integer.parseInt(cmd.getOptionValue("t")) : DEFAULT_MAX_THREADS;
 
-		if (tasks < 1 || tasks > 32) {
-			throw new RuntimeException("Command arg t should be in range [1, 32]");
+		if (maxThreads < 1 || maxThreads > 32) {
+			throw new RuntimeException("Max threads should be in range [1, 32]");
 		}
 		
 		quiet = cmd.hasOption("q");
 	}
+	
 
 	private void readMatricesFromInputFile() throws FileNotFoundException {
 		if (!quiet) {
@@ -122,21 +139,22 @@ class Config {
 		int n = scanner.nextInt();
 		int k = scanner.nextInt();
 
-		matrix1 = new Matrix(m, n);
-		for (int i = 0; i < m; i++) {
-			for (int j = 0; j < n; j++) {
-				matrix1.setCell(i, j, scanner.nextDouble());
+		matrix1 = readMatrixFromScanner(m, n, scanner);
+		matrix2 = readMatrixFromScanner(n, k, scanner);
+				
+		scanner.close();
+	}
+	
+	private Matrix readMatrixFromScanner(int rows, int cols, Scanner scanner) {
+		Matrix matrix = new Matrix(rows, cols);
+		
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				matrix.setCell(i, j, scanner.nextDouble());
 			}
 		}
 
-		matrix2 = new Matrix(n, k);
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < k; j++) {
-				matrix2.setCell(i, j, scanner.nextDouble());
-			}
-		}
-		
-		scanner.close();
+		return matrix;
 	}
 	
 	private void createMatricesFromDimensions() {
@@ -144,8 +162,8 @@ class Config {
 			System.out.println("Generating random matrices with given dimensions");
 		}
 		
-		matrix1 = new Matrix(m, n);
-		matrix2 = new Matrix(n, k);
+		matrix1 = new Matrix(matrix1Rows, matricesCommonDimension);
+		matrix2 = new Matrix(matricesCommonDimension, matrix2Cols);
 
 		matrix1.fillRandomly();
 		matrix2.fillRandomly();
