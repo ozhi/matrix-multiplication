@@ -13,18 +13,13 @@ public class Main {
 
 		long timeBeforeMultiplication = Calendar.getInstance().getTimeInMillis();
 
-		Matrix concurrentProduct = Matrix.concurrentProduct(config.matrix1, config.matrix2, config.tasks, config.quiet);
+		Matrix concurrentProduct = Matrix.concurrentProduct(
+				config.getMatrix1(), config.getMatrix2(), config.getMaxThreads(), config.isQuietMode());
 
 		long timeAfterMultiplication = Calendar.getInstance().getTimeInMillis();
 		long timeTakenForMultiplication = timeAfterMultiplication - timeBeforeMultiplication;
 		System.out.println(String.format("Total time of multiplication: %s", timeTakenForMultiplication));
 		
-		if (config.outputFile != null) {
-			if (!config.quiet) {
-				System.out.println("Writing result to output file " + config.outputFile);
-			}
-			
-			config.writeMatrixToOutputFile(concurrentProduct);
-		}
+		config.processOutputMatrix(concurrentProduct);
 	}
 }

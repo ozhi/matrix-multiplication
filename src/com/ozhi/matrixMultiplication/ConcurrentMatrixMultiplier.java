@@ -39,6 +39,10 @@ public class ConcurrentMatrixMultiplier {
 		int cells = result.getRows() * result.getCols();
 		int threads = calculateActualThreads(cells, maxThreads);
 		
+		if (!quiet) {
+			System.out.println(String.format("Using %d threads for multiplication", threads));
+		}
+		
 		Stack<Thread> threadsToJoin = new Stack<Thread>(); 
 		
 		int intervalLength = cells / threads;
