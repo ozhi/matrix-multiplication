@@ -27,7 +27,7 @@ public class Main {
 
 		long timeAfterMultiplication = Calendar.getInstance().getTimeInMillis();
 		
-		logger.logImportant("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication);
+		logger.logImportant("Total time of multiplication: %s ms", timeAfterMultiplication - timeBeforeMultiplication);
 		
 		if (config.getOutputFile() != null) {
 			outputMatrixToFile(product, config.getOutputFile(), logger);

@@ -1,11 +1,13 @@
 package com.ozhi.matrixMultiplication;
 
 import java.util.Calendar;
-import java.util.Stack;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 
 public class ConcurrentMatrixMultiplier {
-	private Matrix m1;
-	private Matrix m2;
+	private Matrix matrix1;
+	private Matrix matrix2;
 	private int maxThreads;
 	private Logger logger;
 	
@@ -13,20 +15,16 @@ public class ConcurrentMatrixMultiplier {
 	
 	private Matrix result;
 
-	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads, Logger logger) {
+	public ConcurrentMatrixMultiplier(Matrix matrix1, Matrix matrix2, int maxThreads, Logger logger) {
 		if (maxThreads < 1 || maxThreads > 32) {
 			throw new RuntimeException("Invalid number of threads passed as arg to ConcurrentMatrixMultiplier");
 		}
 
-		this.m1 = m1;
-		this.m2 = m2;
+		this.matrix1 = matrix1;
+		this.matrix2 = matrix2;
 		this.maxThreads = maxThreads;
 		this.logger = logger;
 		this.result = null;
-	}
-
-	public Matrix getResult() {
-		return result;
 	}
 
 	public void multiply() {
@@ -37,36 +35,67 @@ public class ConcurrentMatrixMultiplier {
 		 * Each thread computes N/threads cells with consecutive numbers.
 		 * The leftover threads are calculated by the last thread
 		 */
+		
+		result = new Matrix(matrix1.getRows(), matrix2.getCols());
 
-		this.result = new Matrix(m1.getRows(), m2.getCols());
+		int cellsCount = result.getRows() * result.getCols();
+		int threadsCount = calculateThreadsToBeUsed(cellsCount, maxThreads);
+		List<Thread> threads = createThreads(cellsCount, threadsCount);
 		
-		int cells = result.getRows() * result.getCols();
-		int threads = calculateThreadsToBeUsed(cells, maxThreads);
-		
-		logger.log(String.format("Using %d threads for multiplication", threads));
-		
-		Stack<Thread> threadsToJoin = new Stack<Thread>(); 
-		
-		int intervalLength = cells / threads;
-		for (int t = 0; t < threads; t++) {
-			int fromCellNumber = t * intervalLength;
-			int toCellNumber = (t + 1) * intervalLength;
-			if (t == threads - 1 ) {
-				toCellNumber = cells;
-			}
-			
-			Thread cellsCalculator = new Thread(new CellsCalculator(t, fromCellNumber, toCellNumber));
-			cellsCalculator.start();
-			threadsToJoin.push(cellsCalculator);
+		logger.log("Max threads to be used: %d", maxThreads);
+		logger.log("Actual threads to be used: %d", threadsCount);		
+
+		ListIterator<Thread> iterator = threads.listIterator();
+		while (iterator.hasNext()) {
+			iterator.next().start();
 		}
 		
-		while (!threadsToJoin.isEmpty()) {
+		iterator = threads.listIterator();
+		while (iterator.hasNext()) {
 			try {
-				threadsToJoin.pop().join();
+				iterator.next().join();
 			} catch (InterruptedException e) {
 				System.out.println("ConcurrentMatrixMultiplier main thread interrupted");
+				return;
 			}
 		}
+	}
+	
+	public Matrix getResult() {
+		return result;
+	}
+	
+	private int calculateThreadsToBeUsed(int cells, int maxThreads) {
+		int threads = maxThreads;
+		
+		if (cells / threads < MIN_CELLS_PER_THREAD) {
+			threads = cells / MIN_CELLS_PER_THREAD;
+		}
+		
+		if (threads == 0) {
+			threads = 1;
+		}
+		
+		return threads;
+	}
+	
+	private List<Thread> createThreads(int cellsCount, int threadsCount) {
+		LinkedList<Thread> threads = new LinkedList<Thread>(); 
+		int intervalLength = cellsCount / threadsCount;
+
+		for (int threadIndex = 0; threadIndex < threadsCount; threadIndex++) {
+			int intervalStart = threadIndex * intervalLength;
+			int intervalEnd = (threadIndex + 1) * intervalLength;
+			
+			if (threadIndex == threadsCount - 1 ) {
+				intervalLength = cellsCount;
+			}
+			
+			Thread thread = new Thread(new CellsCalculator(threadIndex, intervalStart, intervalEnd));
+			threads.add(thread);
+		}
+		
+		return threads;
 	}
 
 	private class CellsCalculator implements Runnable {
@@ -80,7 +109,6 @@ public class ConcurrentMatrixMultiplier {
 			this.toCellNumber = toCellNumber;
 		}
 
-		// calculate cells with numbers [fromCellNumber; toCellNumber)
 		public void run() {
 			long timeBeforeCalculation = Calendar.getInstance().getTimeInMillis();
 			logger.log("Thread %d started", threadIndex);
@@ -91,9 +119,9 @@ public class ConcurrentMatrixMultiplier {
 
 				double cellValue = 0;
 
-				int limit = m1.getCols();
-				for (int i = 0; i < limit; i++) {
-					cellValue += m1.getCell(row, i) * m2.getCell(i, col);
+				int matricesCommonDimension = matrix1.getCols();
+				for (int i = 0; i < matricesCommonDimension; i++) {
+					cellValue += matrix1.getCell(row, i) * matrix2.getCell(i, col);
 				}
 
 				result.setCell(row, col, cellValue);
@@ -102,19 +130,5 @@ public class ConcurrentMatrixMultiplier {
 			long timeAfterCalculation = Calendar.getInstance().getTimeInMillis();
 			logger.log("Thread %d finished (execution time %d ms)", threadIndex, timeAfterCalculation - timeBeforeCalculation);
 		}
-	}
-
-	int calculateThreadsToBeUsed(int cells, int maxThreads) {
-		int threads = maxThreads;
-		
-		if (cells / threads < MIN_CELLS_PER_THREAD) {
-			threads = cells / MIN_CELLS_PER_THREAD;
-		}
-		
-		if (threads == 0) {
-			threads = 1;
-		}
-		
-		return threads;
 	}
 }
