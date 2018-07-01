@@ -9,6 +9,8 @@ public class ConcurrentMatrixMultiplier {
 	private int maxThreads;
 	private Logger logger;
 	
+	private static final int MIN_CELLS_PER_THREAD = 1000;
+	
 	private Matrix result;
 
 	public ConcurrentMatrixMultiplier(Matrix m1, Matrix m2, int maxThreads, Logger logger) {
@@ -32,13 +34,14 @@ public class ConcurrentMatrixMultiplier {
 		 * Let N be the number of cells in the result matrix. N = result.rows * result.cols.
 		 * They are numbered from 0 to N-1.
 		 * Cell number n is actually cell(n / result.cols, n % result.cols).
-		 * Each thread computes N/threads cells with consecutive numbers.  
+		 * Each thread computes N/threads cells with consecutive numbers.
+		 * The leftover threads are calculated by the last thread
 		 */
 
 		this.result = new Matrix(m1.getRows(), m2.getCols());
 		
 		int cells = result.getRows() * result.getCols();
-		int threads = calculateActualThreads(cells, maxThreads);
+		int threads = calculateThreadsToBeUsed(cells, maxThreads);
 		
 		logger.log(String.format("Using %d threads for multiplication", threads));
 		
@@ -101,18 +104,17 @@ public class ConcurrentMatrixMultiplier {
 		}
 	}
 
-	int calculateActualThreads(int cells, int maxThreads) {
-		return maxThreads;
-		// int threads = maxThreads;
-		//
-		// if (threads > cells / 100) {
-		// threads = cells / 100;
-		// }
-		//
-		// if (threads == 0) {
-		// threads = 1;
-		// }
-		//
-		// return threads;
+	int calculateThreadsToBeUsed(int cells, int maxThreads) {
+		int threads = maxThreads;
+		
+		if (cells / threads < MIN_CELLS_PER_THREAD) {
+			threads = cells / MIN_CELLS_PER_THREAD;
+		}
+		
+		if (threads == 0) {
+			threads = 1;
+		}
+		
+		return threads;
 	}
 }
