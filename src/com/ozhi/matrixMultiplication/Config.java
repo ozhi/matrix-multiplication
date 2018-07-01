@@ -14,14 +14,14 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 class Config {
-	public String inputFile;
-	public Integer matrix1Rows, matricesCommonDimension, matrix2Cols;
-	public String outputFile;
-	public int maxThreads;
-	public boolean quiet;
+	private String inputFile;
+	private Integer matrix1Rows, matricesCommonDimension, matrix2Cols;
+	private String outputFile;
+	private int maxThreads;
+	private boolean quiet;
 
-	public Matrix matrix1;
-	public Matrix matrix2;
+	private Matrix matrix1;
+	private Matrix matrix2;
 	
 	private final static int DEFAULT_MAX_THREADS = 1;
 
