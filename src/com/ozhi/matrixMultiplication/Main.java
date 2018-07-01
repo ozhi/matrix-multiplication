@@ -13,13 +13,17 @@ public class Main {
 
 		long timeBeforeMultiplication = Calendar.getInstance().getTimeInMillis();
 
-		Matrix concurrentProduct = Matrix.concurrentProduct(
+		Matrix product = Matrix.concurrentProduct(
 				config.getMatrix1(), config.getMatrix2(), config.getMaxThreads(), config.isQuietMode());
 
 		long timeAfterMultiplication = Calendar.getInstance().getTimeInMillis();
-		long timeTakenForMultiplication = timeAfterMultiplication - timeBeforeMultiplication;
-		System.out.println(String.format("Total time of multiplication: %s", timeTakenForMultiplication));
 		
-		config.processOutputMatrix(concurrentProduct);
+		if (!product.equals(Matrix.sequentialProduct(config.getMatrix1(), config.getMatrix2()))) {
+			throw new Error("Concurrent and sequential product are not equal");
+		}
+		
+		System.out.println(String.format("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication));
+		
+		config.processOutputMatrix(product);
 	}
 }

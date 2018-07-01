@@ -28,55 +28,51 @@ public class Matrix {
 		}
 	}
 	
-	public Matrix times(Matrix other) {
-		if (true) {
-			throw new Error("Only use the concurrent multiplication method");
-		}
-		
-		if (cols != other.rows) {
+	public static Matrix sequentialProduct(Matrix matrix1, Matrix matrix2) {
+		if (matrix1.cols != matrix2.rows) {
 			throw new IllegalArgumentException("Can not multiply matrices of incompatible sizes");
 		}
 		
-		Matrix result = new Matrix(rows, other.cols);
+		Matrix result = new Matrix(matrix1.rows, matrix2.cols);
 		
-		for (int i = 0; i < rows; i++) { 
-			for (int j = 0; j < other.cols; j++) {
-				double sum = 0;
+		for (int i = 0; i < matrix1.rows; i++) { 
+			for (int j = 0; j < matrix2.cols; j++) {
+				double cellValue = 0;
 				
-				for (int k = 0; k < cols; k++) {
-					sum += getCell(i, k) * other.getCell(k, j);
+				for (int k = 0; k < matrix1.cols; k++) {
+					cellValue += matrix1.getCell(i, k) * matrix2.getCell(k, j);
 				}
 				
-				result.setCell(i, j, sum);
+				result.setCell(i, j, cellValue);
 			}
 		}
 		
 		return result;
 	}
 	
-	public static Matrix concurrentProduct(Matrix m1, Matrix m2, int threads, boolean quiet) {
-		ConcurrentMatrixMultiplier cmm = new ConcurrentMatrixMultiplier(m1, m2, threads, quiet);
-		cmm.multiply();
-		return cmm.getResult();
+	public static Matrix concurrentProduct(Matrix matrix1, Matrix matrix2, int maxThreads, boolean quiet) {
+		ConcurrentMatrixMultiplier multiplier = new ConcurrentMatrixMultiplier(matrix1, matrix2, maxThreads, quiet);
+		multiplier.multiply();
+		return multiplier.getResult();
 	}
 		
 	public double getCell(int row, int col) {
 		if (!isValidIndexPair(row, col)) { 
-			throw new IllegalArgumentException();	
+			throw new IllegalArgumentException("Can not get cell with invalid indices");	
 		}
 		return cells[row][col];
 	}
 	
 	public void setCell(int row, int col, double value) { 
 		if (!isValidIndexPair(row, col)) { 
-			throw new IllegalArgumentException();	
+			throw new IllegalArgumentException("Can not set cell with invalid indices");	
 		}
 		cells[row][col] = value;
 	}
 	
-	public int getRows() { return this.rows; }
+	public int getRows() { return rows; }
 	
-	public int getCols() { return this.cols; }
+	public int getCols() { return cols; }
 	
 	@Override
 	public String toString() {
@@ -87,8 +83,20 @@ public class Matrix {
 		return result;
 	}
 	
-	// if one overrides equals, one must also override hashCode, so we use a custom function name
-	public boolean isSameAs(Matrix other) {
+	@Override
+	public boolean equals(Object object) {
+		if (object == this) {
+			return true;
+		}
+		
+		if (!(object instanceof Matrix)) {
+			return false;
+		}
+		
+		return equals((Matrix) object);				
+	}
+	
+	public boolean equals(Matrix other) {
 		if (rows != other.rows || cols != other.cols) { 
 			return false;
 		}
@@ -101,8 +109,12 @@ public class Matrix {
 			}
 		}
 		
-		return true;		
+		return true;
 	}
+	
+	// Note: If you override equals, you must also override hashCode, so we use a dummy implementation
+	@Override
+	public int hashCode() { return 0; }
 	
 	private boolean isValidIndexPair(int row, int col) {
 		return 0 <= row && row < rows && 0 <= col && col < cols;
