@@ -23,8 +23,8 @@ public class Main {
 			throw new Error("Concurrent and sequential product are not equal");
 		}
 		
-		logger.importantLog(String.format("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication));
+		logger.importantLog("Total time of multiplication: %s", timeAfterMultiplication - timeBeforeMultiplication);
 		
-		config.processOutputMatrix(product);
+		config.processOutputMatrix(product, logger);
 	}
 }

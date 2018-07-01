@@ -80,7 +80,7 @@ public class ConcurrentMatrixMultiplier {
 		// calculate cells with numbers [fromCellNumber; toCellNumber)
 		public void run() {
 			long timeBeforeCalculation = Calendar.getInstance().getTimeInMillis();
-			logger.log(String.format("Thread %d started", threadIndex));
+			logger.log("Thread %d started", threadIndex);
 			
 			for (int cellNumber = fromCellNumber; cellNumber < toCellNumber; cellNumber++) {
 				int row = cellNumber / result.getCols();
@@ -97,7 +97,7 @@ public class ConcurrentMatrixMultiplier {
 			}
 
 			long timeAfterCalculation = Calendar.getInstance().getTimeInMillis();
-			logger.log(String.format("Thread %d finished (execution time %d)", threadIndex, timeAfterCalculation - timeBeforeCalculation));
+			logger.log("Thread %d finished (execution time %d ms)", threadIndex, timeAfterCalculation - timeBeforeCalculation);
 		}
 	}
 

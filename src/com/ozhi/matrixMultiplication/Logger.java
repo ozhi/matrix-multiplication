@@ -12,13 +12,13 @@ public class Logger {
 		this.quiet = quiet;
 	}
 	
-	public void log(String message) {
+	public void log(String format, Object...args) {
 		if (!quiet) {
-			System.out.println(message);
+			System.out.println(String.format(format, args));
 		}
 	}
 	
-	public void importantLog(String message) {
-		System.out.println(message);
+	public void importantLog(String format, Object...args) {
+		System.out.println(String.format(format, args));
 	}
 }
